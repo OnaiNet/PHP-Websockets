@@ -86,17 +86,18 @@ abstract class WebSocketServer {
       $write = $except = null;
       $this->_tick();
       $this->tick();
-      @socket_select($read,$write,$except,1);
+      socket_select($read,$write,$except,1);
       foreach ($read as $socket) {
         if ($socket == $this->master) {
-          $client = socket_accept($socket);
-          if ($client < 0) {
+          $socket_result = socket_accept($socket);
+          
+          if ($socket_result === false) {
             $this->stderr("Failed: socket_accept()");
             continue;
           } 
           else {
-            $this->connect($client);
-            $this->stdout("Client connected. " . $client);
+            $new_client_id = $this->connect($socket_result);
+            $this->stdout("Client connected. " . $new_client_id);
           }
         } 
         else {
@@ -153,6 +154,7 @@ abstract class WebSocketServer {
     $this->users[$user->id] = $user;
     $this->sockets[$user->id] = $socket;
     $this->connecting($user);
+    return $user->id;
   }
 
   protected function disconnect($socket, $triggerClosed = true, $sockErrNo = null) {
